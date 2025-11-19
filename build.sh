@@ -1,1 +1,1 @@
-python3 src/main.py "/sredekopp/pssg/"
+python3 src/main.py "/pssg/"
