@@ -6,26 +6,27 @@ from block_markdown import (
      extract_title
 )
 
-dir_path_public   = "./public"
+#dir_path_public   = "./public"
 dir_path_static   = "./static"
 dir_path_content  = "./content"
 dir_path_template = "./template.html"
+dir_path_docs     = "./docs"
 
-def sync_content():
+def sync_content(basepath):
     print('Copying static files...')
-    copy_files(dir_path_static, dir_path_public)
+    copy_files(dir_path_static, dir_path_docs)
     print('Generating dynamic files...')
     print(f' Using template: {dir_path_template}')
-    generate_pages(dir_path_content, dir_path_template, dir_path_public)
+    generate_pages(dir_path_content, dir_path_template, dir_path_docs, basepath)
 
 def prepare_target_folder():
     print('Preparing target folder...')
-    if os.path.exists(dir_path_public):
-        print(f' Removing {dir_path_public}')
-        shutil.rmtree(dir_path_public)
+    if os.path.exists(dir_path_docs):
+        print(f' Removing {dir_path_docs}')
+        shutil.rmtree(dir_path_docs)
 
-    os.mkdir(dir_path_public)
-    print(f' Creating {dir_path_public}')
+    os.mkdir(dir_path_docs)
+    print(f' Creating {dir_path_docs}')
 
 def copy_files(source_dir, target_dir):
     if not os.path.exists(target_dir):
@@ -40,7 +41,7 @@ def copy_files(source_dir, target_dir):
         else:
             copy_files(source_item_path, target_item_path)
 
-def generate_pages(source_dir, template_path, target_dir):
+def generate_pages(source_dir, template_path, target_dir, basepath):
     if not os.path.exists(target_dir):
         os.mkdir(target_dir)
     
@@ -51,12 +52,12 @@ def generate_pages(source_dir, template_path, target_dir):
             target_filename, _ = os.path.splitext(target_item_path)
             target_item_path = target_filename + ".html"
             print(f" * {source_item_path} -> {target_item_path}")
-            generate_page(source_item_path, template_path, target_item_path)
+            generate_page(source_item_path, template_path, target_item_path, basepath)
         else:
             print(f" * {source_item_path} -> {target_item_path}")
-            generate_pages(source_item_path, template_path, target_item_path)
+            generate_pages(source_item_path, template_path, target_item_path, basepath)
 
-def generate_page(from_path, template_path, dest_path):
+def generate_page(from_path, template_path, dest_path, basepath):
     with open(from_path, 'r') as file:
         md_content = file.read()
     with open(template_path, 'r') as file:
@@ -64,6 +65,8 @@ def generate_page(from_path, template_path, dest_path):
     title = extract_title(md_content)
     html_content = markdown_to_html_node(md_content).to_html()
     generated_content = template_content.replace('{{ Title }}', title).replace('{{ Content }}', html_content)
+    generated_content = generated_content.replace('href="/', f'href="{basepath}')
+    generated_content = generated_content.replace('src="/', f'src="{basepath}')
     with open(dest_path, "w") as f:
         f.write(generated_content)
 
